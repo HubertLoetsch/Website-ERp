@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personen Kalender</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form, #calendar {
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        label, input {
+            display: block;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Personen Kalender</h1>
+
+<form id="personForm">
+    <label for="personName">Name:</label>
+    <input type="text" id="personName" required>
+    
+    <label for="startDate">Von:</label>
+    <input type="date" id="startDate" required>
+    
+    <label for="endDate">Bis:</label>
+    <input type="date" id="endDate" required>
+
+    <label for="label">Bezeichnung:</label>
+    <input type="text" id="label" required>
+
+    <label for="location">Ortschaft:</label>
+    <input type="text" id="location" required>
+
+    <label for="email">E-Mail:</label>
+    <input type="email" id="email" required>
+
+    <button type="button" onclick="addPerson()">Person hinzufügen</button>
+</form>
+
+<div id="calendar"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+
+<script>
+    var calendarEvents = [];
+
+    function addPerson() {
+        var personName = document.getElementById('personName').value;
+        var startDate = document.getElementById('startDate').value;
+        var endDate = document.getElementById('endDate').value;
+        var label = document.getElementById('label').value;
+        var location = document.getElementById('location').value;
+        var email = document.getElementById('email').value;
+
+        if (personName && startDate && endDate && label && location && email) {
+            var event = {
+                title: personName,
+                start: startDate,
+                end: moment(endDate).add(1, 'days').format('YYYY-MM-DD'),
+                description: "Bezeichnung: " + label + "\nOrtschaft: " + location
+            };
+
+            calendarEvents.push(event);
+            updateCalendar();
+
+            sendEmail(personName, email, 'Willkommen im Kalender', `Hallo ${personName},\n\nWillkommen im Kalender! Vielen Dank für Ihre Anmeldung.`);
+
+            // Erinnerungsmail 14 Tage vor dem Termin
+            var reminderDate = moment(startDate).subtract(14, 'days').format('YYYY-MM-DD');
+            scheduleReminderEmail(personName, email, 'Erinnerung an Ihren Termin', `Hallo ${personName},\n\nIhr Termin nähert sich in 14 Tagen. Bitte beachten Sie das Datum: ${startDate}.`);
+
+            // Optional: Hier können Sie Daten speichern oder weitere Aktionen durchführen.
+
+            // Formular leeren
+            document.getElementById('personName').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            document.getElementById('label').value = '';
+            document.getElementById('location').value = '';
+            document.getElementById('email').value = '';
+        } else {
+            alert('Bitte füllen Sie alle Felder aus.');
+        }
+    }
+
+    function sendEmail(personName, email, subject, message) {
+        fetch('http://localhost:3000/send-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ personName, email, subject, message }),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Email send failed');
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            alert('Email send failed');
+        });
+    }
+
+    function scheduleReminderEmail(personName, email, subject, message) {
+        // Hier könnte eine Implementierung für die Planung von Erinnerungsmails erfolgen
+        // Je nachdem, welche Art von Server oder Dienst Sie verwenden, kann dies variieren.
+        // Eine Möglichkeit wäre die Verwendung von "setTimeout" oder Aufgabenplanung auf dem Server.
+        // Beachten Sie, dass dies nur ein Beispiel ist und in einer Produktionsumgebung weiter angepasst werden muss.
+    }
+
+    function updateCalendar() {
+        $('#calendar').fullCalendar('destroy');
+
+        $('#calendar').fullCalendar({
+            header: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'month,agendaWeek,agendaDay'
+            },
+            events: calendarEvents,
+            eventClick: function(calEvent, jsEvent, view) {
+                alert('Bezeichnung: ' + calEvent.description);
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        updateCalendar();
+    });
+</script>
+
+</body>
+</html>

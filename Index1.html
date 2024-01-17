@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Editor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    #emailEditor {
+      max-width: 600px;
+      margin: 20px auto;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px;
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #savedEmails {
+      max-width: 600px;
+      margin: 20px auto;
+    }
+
+    #emailList {
+      list-style: none;
+      padding: 0;
+    }
+
+    #emailList li {
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .acceptButton {
+        margin: 50px;
+      background-color: #008CBA;
+    }
+
+    .accepted {
+      background-color: #ddd; /* Optional: Change the background color for accepted emails */
+    }
+  </style>
+</head>
+<body>
+
+  <div id="emailEditor">
+    <label for="emailSubject">Betreff:</label>
+    <input type="text" id="emailSubject">
+
+    <label for="emailText">Textinhalt:</label>
+    <textarea id="emailText" oninput="adjustTextareaHeight()"></textarea>
+
+    <button onclick="saveEmail()">Speichern</button>
+  </div>
+
+  <div id="savedEmails">
+    <h2>Gespeicherte Emails</h2>
+    <ul id="emailList" onclick="editEmail(event)"></ul>
+  </div>
+
+  <script>
+    function saveEmail() {
+      var emailSubject = document.getElementById("emailSubject").value;
+      var emailText = document.getElementById("emailText").value;
+
+      if (emailSubject && emailText) {
+        var savedEmailsList = document.getElementById("emailList");
+        var listItem = document.createElement("li");
+        var lineCount = (emailText.match(/\n/g) || []).length + 1; // Counting the number of lines
+        listItem.innerHTML = `<strong>${emailSubject}</strong>: ${emailText}`;
+        listItem.setAttribute("data-subject", emailSubject);
+        listItem.setAttribute("data-text", emailText);
+
+        var acceptButton = document.createElement("button");
+        acceptButton.innerHTML = "Akzeptieren";
+        acceptButton.className = "acceptButton";
+        acceptButton.onclick = function(event) {
+          event.stopPropagation(); // Prevents the click event from reaching the parent (LI)
+          acceptEmail(listItem);
+        };
+
+        listItem.appendChild(acceptButton);
+
+        savedEmailsList.appendChild(listItem);
+
+        // Optional: Clear the input fields after saving
+        document.getElementById("emailSubject").value = "";
+        document.getElementById("emailText").value = "";
+        adjustTextareaHeight(); // Reset textarea height after clearing
+      } else {
+        alert("Betreff und Textinhalt dürfen nicht leer sein.");
+      }
+    }
+
+    function editEmail(event) {
+      var target = event.target;
+      if (target.tagName === "LI" && !target.classList.contains("accepted")) {
+        var emailSubject = target.getAttribute("data-subject");
+        var emailText = target.getAttribute("data-text");
+        var lineCount = (emailText.match(/\n/g) || []).length + 1; // Counting the number of lines
+
+        document.getElementById("emailSubject").value = emailSubject;
+        document.getElementById("emailText").value = emailText;
+
+        // Remove the edited email from the list
+        target.parentNode.removeChild(target);
+
+        adjustTextareaHeight(); // Adjust textarea height after editing
+      }
+    }
+
+    function acceptEmail(listItem) {
+      // Ensure that the accepted email is not edited again
+      listItem.classList.add("accepted");
+
+      // Optional: Remove the accepted email from the list
+      listItem.parentNode.removeChild(listItem);
+
+      adjustTextareaHeight(); // Adjust textarea height after accepting
+    }
+
+    function adjustTextareaHeight() {
+      var textarea = document.getElementById("emailText");
+      textarea.style.height = "auto"; // Reset to auto height
+      textarea.style.height = (textarea.scrollHeight) + "px"; // Set the new height
+    }
+  </script>
+
+</body>
+</html>
